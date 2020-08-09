@@ -1,0 +1,80 @@
+---
+- hosts: all
+  vars:
+    hostname: keycloak
+    public_ip: '192.168.103.3'
+  tasks:
+  - name: change the hostname
+    command: hostnamectl set-hostname "{{ hostname }}"
+
+  - name: force a pacman refresh before installing packages
+    command: pacman -Syy
+  
+  - name: Install packages
+    pacman:
+      name:
+      - jre-openjdk-headless
+      - wget
+      - curl
+      - git
+      - net-tools
+      - vim
+      - make
+      - gcc
+      - python-pip
+      - wget
+      - sudo
+      state: latest
+      update_cache: yes
+
+  - name: Install postgresql # Dependencies defined at: https://www.archlinux.org/packages/extra/x86_64/postgresql/
+    pacman:
+      name:
+        - make
+        - postgresql
+        - icu
+        - krb5
+        - libldap
+        - libxml2
+        - llvm-libs
+        - openssl
+        - pam
+        - postgresql-libs
+        - readline
+        - systemd-libs
+        - perl
+        - postgresql-old-upgrade
+        - python
+        - python2
+        - tcl
+        - clang
+        - zlib
+      state: latest
+      update_cache: yes
+
+  - name: initialise the postgres database
+    command: "initdb -D {{database_path}}"
+    args:
+      creates: "{{database_path}}/postgresql.conf"
+    become: yes
+    become_user: postgres
+    become_method: sudo
+
+  - name: Insert trusted host configuration in postgres database.
+    lineinfile: 
+      path: "{{database_path}}/pg_hba.conf"
+      insertafter: "host    all             all             ::1/128                 trust"
+      line: 'host    all             all             0.0.0.0/0               trust'
+
+  - name: Add the public IP of the host to the listen_addresses
+    lineinfile:
+      path: "{{database_path}}/postgresql.conf"
+      regexp: "^#listen_addresses = 'localhost'.*"
+      line: "listen_addresses = 'localhost,{{public_ip}}'"
+
+  - name: enable and start the postgres database
+    systemd:
+      name: postgresql
+      state: started
+      enabled: yes
+
