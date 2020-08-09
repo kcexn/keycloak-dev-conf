@@ -1,1 +1,0 @@
-{"9p":{"/vagrant":{"guestpath":"/vagrant","hostpath":"/home/kevin/BuildAndInstall/Vagrant/keycloak","disabled":false,"__vagrantfile":true,"target":"/vagrant","accessmode":"passthrough","mount":true,"readonly":null,"mount_tag":"61e98029f732bf93e629ce5bb3612f8"}}}
